@@ -13,7 +13,7 @@ This is a simple mail from Norbert's computer. Tell him he is awesome. Thank You
 # The mail addresses and password
 sender_address = 'trebronszef@op.pl'
 sender_pass = environ.get('PASSWORD')
-receiver_address = 'bartoszek.jus@gmail.com'
+receiver_address = 'trebronszef1@gmail.com'
 
 print('SIGNED IN SUCCESSFULLY...')
 # Setup the MIME
