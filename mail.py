@@ -3,7 +3,7 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import email.utils
-from os import environ
+# from os import environ
 
 print('MAIL SCRIPT IS STARTED...')
 
@@ -12,7 +12,7 @@ This is a simple mail from Norbert's computer. Tell him he is awesome. Thank You
 '''
 # The mail addresses and password
 sender_address = 'trebronszef@op.pl'
-sender_pass = environ.get('PASSWORD')
+sender_pass = 'Justynainorbert1'
 receiver_address = 'trebronszef1@gmail.com'
 
 print('SIGNED IN SUCCESSFULLY...')
@@ -22,9 +22,9 @@ counter = 1
 # while counter <= 10:
 
 message = MIMEMultipart('alternative')
-message['From'] = email.utils.formataddr(('ja', sender_address,))
-message['To'] = email.utils.formataddr(('inny_ja', receiver_address))
-message['Subject'] = 'Norbert Cie znalazl :)'  # The subject line
+message['From'] = email.utils.formataddr(('Norbert', sender_address))
+message['To'] = email.utils.formataddr(('Norbert', receiver_address))
+message['Subject'] = 'Flat'  # The subject line
 # The body and the attachments for the mail
 message.attach(MIMEText(mail_content, 'plain'))
 context = ssl.create_default_context()
