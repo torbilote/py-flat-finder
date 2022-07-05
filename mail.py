@@ -3,7 +3,10 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import email.utils
-# from os import environ
+from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv()
 
 print('MAIL SCRIPT IS STARTED...')
 
@@ -12,7 +15,7 @@ This is a simple mail from Norbert's computer. Tell him he is awesome. Thank You
 '''
 # The mail addresses and password
 sender_address = 'trebronszef@op.pl'
-sender_pass = 'Justynainorbert1'
+sender_pass = getenv('PASSWORD')
 receiver_address = 'trebronszef1@gmail.com'
 
 print('SIGNED IN SUCCESSFULLY...')
@@ -24,7 +27,7 @@ counter = 1
 message = MIMEMultipart('alternative')
 message['From'] = email.utils.formataddr(('Norbert', sender_address))
 message['To'] = email.utils.formataddr(('Norbert', receiver_address))
-message['Subject'] = 'Flat'  # The subject line
+message['Subject'] = 'Info'  # The subject line
 # The body and the attachments for the mail
 message.attach(MIMEText(mail_content, 'plain'))
 context = ssl.create_default_context()
@@ -38,6 +41,7 @@ try:
     session.ehlo()
     session.login(sender_address, sender_pass)  # login with mail_id and password
     text = message.as_string()
+    print(sender_address, receiver_address, text)
     session.sendmail(sender_address, receiver_address, text)
     session.close()
     print('Counter: ', counter)
