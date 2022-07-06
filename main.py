@@ -54,11 +54,8 @@ class Requestor():
 
     def send_email(self, flats_to_send: Dict) -> None:
         email_header1 = f'Witam serdecznie!\n\n'
-        email_header2 = f'Mail wygenerowany automatycznie przez niesamowitego hakera zwanego *Norbi*.\n'
-        email_header3 = 'Jeśli go otrzymałeś to zostałeś zhakowany! Muhahaha!\n'
-        email_header4 = 'Wyślij BLIKa za 5 dyszek to już więcej do Ciebie nie wróci :)\n\n'
-        email_header5 = f'A przy okazji, liczba nowych mieszkań na OLX dla Twoich filtrów to {len(flats_to_send)}. Oto one:\n\n'
-        email_header = email_header1 + email_header2 + email_header3 + email_header4 + email_header5
+        email_header2 = f'Liczba nowych mieszkań na OLX dla Twoich filtrów to {len(flats_to_send)}. Oto one:\n\n'
+        email_header = email_header1 + email_header2
 
         flat_list_details = [flat_data for flat_data in flats_to_send.values()]
         email_main = ''
