@@ -53,13 +53,20 @@ class Requestor():
         self.flat_repository.update(new_flat)
 
     def send_email(self, flats_to_send: Dict) -> None:
-        email_content = f'''
-        Hello,
-        Number of new flats: {len(flats_to_send)}
+        email_header1 = f'Witam serdecznie!\n\n'
+        email_header2 = f'Mail wygenerowany automatycznie przez niesamowitego hakera zwanego *Norbi*.\n'
+        email_header3 = 'Jeśli go otrzymałeś to zostałeś zhakowany! Muhahaha!\n'
+        email_header4 = 'Wyślij BLIKa za 5 dyszek to już więcej do Ciebie nie wróci :)\n\n'
+        email_header5 = f'A przy okazji, liczba nowych mieszkań na OLX dla Twoich filtrów to {len(flats_to_send)}. Oto one:\n\n'
+        email_header = email_header1 + email_header2 + email_header3 + email_header4 + email_header5
 
+        flat_list_details = [flat_data for flat_data in flats_to_send.values()]
+        email_main = ''
 
-        '''
-        # {[flats_to_send[flat_id] for flat_id in flats_to_send.keys()]} \n
+        for flat in flat_list_details:
+            email_main = f'{email_main}\n{flat[1]} -- {flat[3]}zl -- {flat[0]} -- {flat[2]}'
+
+        email_content = email_header + email_main
 
         sender_pass = getenv('PASSWORD')
         message = MIMEMultipart('alternative')
@@ -91,9 +98,8 @@ if __name__ == '__main__':
     load_dotenv()
     url = 'https://www.olx.pl/nieruchomosci/mieszkania/wynajem/wroclaw/?search%5Bfilter_float_price%3Ato%5D=3000&search%5Bfilter_enum_rooms%5D%5B0%5D=two&search%5Bprivate_business%5D=private&search%5Border%5D=created_at%3Adesc&view=galleryWide'
     sender_email = 'trebronszef@op.pl'
-    receivers_email = ['trebronszef1@gmail.com']
-    # interval = 1 * 60 * 10  # 10 minutes
-    interval1 = 1 * 10
+    receivers_email = ['bartoszek.jus@gmail.com', 'trebronszef1@gmail.com']
+    interval = 1 * 60 * 10  # 10 minutes
     requestor = Requestor(url, sender_email, receivers_email)
     print('Requester created.')
 
@@ -118,14 +124,9 @@ if __name__ == '__main__':
         print('Comparing loop ended.')
 
         if len(potential_new_flats) > 0 and iterator > 1:
-            pass
-            # requestor.send_email(potential_new_flats)
-
-        print('---FLAT DATA:---\n', set(requestor.flat_data))
-        print('---POT DATA:---\n', set(potential_new_flats))
-        print('---REP DATA:---\n', set(requestor.flat_repository))
+            requestor.send_email(potential_new_flats)
 
         potential_new_flats.clear()
         print(f'End of iteration. Loop time: {(time.time()-time_start)} sec ')
         iterator += 1
-        time.sleep(interval1)
+        time.sleep(interval)
