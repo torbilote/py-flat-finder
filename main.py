@@ -108,11 +108,17 @@ class Requestor():
     def load_repository(self) -> None:
         self.flat_repository = {}
 
-        dataframe = pandas.read_csv(filepath_or_buffer='./repository.csv', index_col=0)
+        try:
+            dataframe = pandas.read_csv(filepath_or_buffer='./repository.csv', index_col=0)
 
-        for index, row in dataframe.iterrows():
-            flat = {str(index): [row[0], row[1], row[2], row[3]]}
-            self.flat_repository.update(flat)
+            for index, row in dataframe.iterrows():
+                flat = {str(index): [row[0], row[1], row[2], row[3]]}
+                self.flat_repository.update(flat)
+
+        except FileNotFoundError:
+            print(FileNotFoundError)
+        else:
+            pass
 
     def save_repository(self) -> None:
         dataframe = pandas.DataFrame.from_dict(data=self.flat_repository, orient='index', columns=['title', 'url', 'fetch_date', 'price'])
@@ -125,17 +131,28 @@ def execute_requestor_job(requestor: Requestor):
 
     new_flats = {}
 
+    # print('before:\n')
+    # print('enriched:\n', list(requestor.enriched_data.keys())[:5])
+    # print('repo:\n', list(requestor.flat_repository.keys())[:5])
+    # print('nwe flats:\n', list(new_flats.keys())[:5])
+
     for potential_new_flat_id in requestor.enriched_data.keys():
             if not potential_new_flat_id in requestor.flat_repository.keys():
                 new_flat = {potential_new_flat_id: requestor.enriched_data[potential_new_flat_id]}
                 new_flats.update(new_flat)
                 requestor.flat_repository.update(new_flat)
 
+    # print('after:\n')
+    # print('enriched:\n', list(requestor.enriched_data.keys())[:5])
+    # print('repo:\n', list(requestor.flat_repository.keys())[:5])
+    # print('nwe flats:\n', list(new_flats.keys())[:5])
+
     if len(new_flats) > 0:
-        # requestor.send_email(new_flats)
-        pass
+        requestor.send_email(new_flats)
 
     requestor.save_repository()
+
+
 
 if __name__ == '__main__':
 
