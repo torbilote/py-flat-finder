@@ -8,35 +8,51 @@ from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup
 import datetime
-from typing import Dict, List
+from typing import Dict
 import time
+import pandas
+
+load_dotenv()
+
+URL = 'https://www.olx.pl/nieruchomosci/mieszkania/wynajem/wroclaw/?search%5Bfilter_float_price%3Ato%5D=3000&search%5Bfilter_enum_rooms%5D%5B0%5D=two&search%5Bprivate_business%5D=private&search%5Border%5D=created_at%3Adesc&view=galleryWide'
+SENDER_EMAIL = getenv('SENDER')
+SENDER_NAME = getenv('SENDER_NAME')
+PASSWORD = getenv('PASSWORD')
+RECIPIENTS_EMAILS = [getenv('REC1'), getenv('REC2')]
+INTERVAL = 1 * 60 * 10  # 10 minutes
+INTERVAL_DEV = 1 * 20 * 1  # 20 seconds
 
 
 class Requestor():
-    def __init__(self, url: str, sender_email: str, receivers_email: List[str]) -> None:
+    def __init__(self, url: str, sender_email: str, sender_name: str, recipients_emails: list[str], password: str) -> None:
         self.url = url
         self.sender_email = sender_email
-        self.receivers_email = receivers_email
-        self.raw_data = []
-        self.flat_data = {}
+        self.sender_name = sender_name
+        self.recipients_emails = recipients_emails
+        self.password = password
+        self.fetched_data = []
+        self.enriched_data = {}
         self.flat_repository = {}
 
-    def get_raw_data(self) -> None:
+    def fetch_raw_data(self) -> None:
+        self.fetched_data = []
+
         response_part1 = requests.get(self.url)
         response_part2 = BeautifulSoup(response_part1.content, 'html.parser')
         response_part3 = response_part2.find(id='innerLayout').find(id='listContainer').find(id='body-container').find(id='gallerywide').find_all('li', {'class': 'wrap'})
-        self.raw_data = response_part3
 
-    def retrieve_flat_data(self) -> None:
-        self.flat_data = {}
+        self.fetched_data = response_part3
 
-        for flat in self.raw_data:
-            flat_id = flat.get('data-id')
-            flat_title = flat.find('div', {'class': 'tcenter'}).a['title']
-            flat_url = flat.find('div', {'class': 'tcenter'}).a['href']
+    def enrich_data(self) -> None:
+        self.enriched_data = {}
+
+        for fetched_item in self.fetched_data:
+            flat_id = fetched_item.get('data-id')
+            flat_title = fetched_item.find('div', {'class': 'tcenter'}).a['title']
+            flat_url = fetched_item.find('div', {'class': 'tcenter'}).a['href']
             flat_fetch_date = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 
-            flat_price = flat.find('div', {'class': 'price'})
+            flat_price = fetched_item.find('div', {'class': 'price'})
             flat_price_class = flat_price.get('class')
 
             if len(flat_price_class) == 1:
@@ -47,83 +63,95 @@ class Requestor():
                 flat_price = f'{flat_price[0]}{flat_price[1]}'
 
             record = {flat_id: [flat_title, flat_url, flat_fetch_date, flat_price]}
-            self.flat_data.update(record)
 
-    def add_to_repository(self, new_flat: Dict) -> None:
-        self.flat_repository.update(new_flat)
+            self.enriched_data.update(record)
 
-    def send_email(self, flats_to_send: Dict) -> None:
+    def send_email(self, new_flats: Dict) -> None:
+
         email_header1 = f'Witam serdecznie!\n\n'
-        email_header2 = f'Liczba nowych mieszkań na OLX dla Twoich filtrów to {len(flats_to_send)}. Oto one:\n\n'
+        email_header2 = f'Liczba nowych mieszkań na OLX dla Twoich filtrów to {len(new_flats)}. Oto one:\n\n'
         email_header = email_header1 + email_header2
 
-        flat_list_details = [flat_data for flat_data in flats_to_send.values()]
+        new_flats_array = [flat for flat in new_flats.values()]
+
         email_main = ''
 
-        for flat in flat_list_details:
-            email_main = f'{email_main}\n{flat[1]} -- {flat[3]}zl -- {flat[0]} -- {flat[2]}'
+        for new_flat in new_flats_array:
+            email_main = f'{email_main}\n{new_flat[1]} -- {new_flat[3]}zl -- {new_flat[0]} -- {new_flat[2]}'
 
         email_content = email_header + email_main
 
-        sender_pass = getenv('PASSWORD')
         message = MIMEMultipart('alternative')
-        message['From'] = email.utils.formataddr(('Norbert', self.sender_email))
-        message['Subject'] = 'New flat offer!'
+        message['From'] = email.utils.formataddr((self.sender_name, self.sender_email))
+        message['Subject'] = 'New fetched_item offer!'
 
         context = ssl.create_default_context()
 
         try:
             session = smtplib.SMTP_SSL('smtp.poczta.onet.pl', 465, context=context, timeout=120)
             session.ehlo()
-            session.login(self.sender_email, sender_pass)
+            session.login(self.sender_email, self.password)
 
-            for receiver in self.receivers_email:
-                message['To'] = email.utils.formataddr(('Subscriber', receiver))
+            for recipient_email in self.recipients_emails:
+                message['To'] = email.utils.formataddr(('Subscriber', recipient_email))
                 message.attach(MIMEText(email_content, 'plain'))
                 text = message.as_string()
-                session.sendmail(self.sender_email, receiver, text)
+                session.sendmail(self.sender_email, recipient_email, text)
 
             session.close()
 
         except Exception as e:
             print("Error: ", e)
         else:
-            print(f'Mail Sent. Number of flats: {len(flats_to_send)}')
+            print(f'Mail Sent. Number of flats: {len(new_flats)}')
 
+    def load_repository(self) -> None:
+        self.flat_repository = {}
+
+        dataframe = pandas.read_csv(filepath_or_buffer='./repository.csv', index_col=0)
+
+        for index, row in dataframe.iterrows():
+            flat = {str(index): [row[0], row[1], row[2], row[3]]}
+            self.flat_repository.update(flat)
+
+    def save_repository(self) -> None:
+        dataframe = pandas.DataFrame.from_dict(data=self.flat_repository, orient='index', columns=['title', 'url', 'fetch_date', 'price'])
+        dataframe.to_csv(path_or_buf='./repository.csv', index=True, index_label='id' )
+
+def execute_requestor_job(requestor: Requestor):
+    requestor.load_repository()
+    requestor.fetch_raw_data()
+    requestor.enrich_data()
+
+    new_flats = {}
+
+    for potential_new_flat_id in requestor.enriched_data.keys():
+            if not potential_new_flat_id in requestor.flat_repository.keys():
+                new_flat = {potential_new_flat_id: requestor.enriched_data[potential_new_flat_id]}
+                new_flats.update(new_flat)
+                requestor.flat_repository.update(new_flat)
+
+    if len(new_flats) > 0:
+        # requestor.send_email(new_flats)
+        pass
+
+    requestor.save_repository()
 
 if __name__ == '__main__':
-    load_dotenv()
-    url = 'https://www.olx.pl/nieruchomosci/mieszkania/wynajem/wroclaw/?search%5Bfilter_float_price%3Ato%5D=3000&search%5Bfilter_enum_rooms%5D%5B0%5D=two&search%5Bprivate_business%5D=private&search%5Border%5D=created_at%3Adesc&view=galleryWide'
-    sender_email = 'trebronszef@op.pl'
-    receivers_email = ['bartoszek.jus@gmail.com', 'trebronszef1@gmail.com']
-    interval = 1 * 60 * 10  # 10 minutes
-    requestor = Requestor(url, sender_email, receivers_email)
-    print('Requester created.')
 
-    iterator = 1
+    requestor = Requestor(URL, SENDER_EMAIL, SENDER_NAME, RECIPIENTS_EMAILS, PASSWORD)
 
     while True:
-        time_start = time.time()
 
-        requestor.get_raw_data()
-        print('Raw data fetched.')
+        print(f'--{datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")} -- Start of iteration. ')
 
-        requestor.retrieve_flat_data()
-        print('Flat data retrieved.')
+        timer_start = time.perf_counter()
 
-        potential_new_flats = {}
+        execute_requestor_job(requestor)
 
-        for new_flat_id in requestor.flat_data.keys():
-            if not new_flat_id in requestor.flat_repository.keys():
-                d = {new_flat_id: requestor.flat_data[new_flat_id]}
-                requestor.add_to_repository(d)
-                potential_new_flats.update(d)
-        print('Comparing loop ended.')
+        timer_stop = time.perf_counter()
+        timer_result = timer_stop - timer_start
 
-        if len(potential_new_flats) > 0 and iterator > 1:
-            requestor.send_email(potential_new_flats)
+        print(f'--{datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")} -- End of iteration. Loop time: {timer_result} sec. ')
 
-        potential_new_flats.clear()
-        print(f'End of iteration. Loop time: {(time.time()-time_start)} sec ')
-        iterator += 1
-        time.sleep(interval)
+        time.sleep(INTERVAL)
