@@ -19,7 +19,7 @@ SENDER_EMAIL = getenv('SENDER')
 SENDER_NAME = getenv('SENDER_NAME')
 PASSWORD = getenv('PASSWORD')
 RECIPIENTS_EMAILS = [getenv('REC1'), getenv('REC2')]
-INTERVAL = 1 * 60 * 10  # 10 minutes
+INTERVAL = 1 * 60 * 5  # 5 minutes
 INTERVAL_DEV = 1 * 20 * 1  # 20 seconds
 
 
