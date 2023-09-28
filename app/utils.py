@@ -68,7 +68,7 @@ class Finder:
             header_tag: bs_tag = item.find("h6", class_=WEB_CLASSES["olx_item_header"])
             price_tag: bs_tag = item.find("p", class_=WEB_CLASSES["olx_item_price"])
             refresh_dt_tag: bs_tag = item.find(
-                "p", class_=WEB_CLASSES["olx_item_refresh_date"]
+                "p", class_=WEB_CLASSES["olx_item_refresh_dt"]
             )
 
             url_text: str = url_tag.get("href") if url_tag else "NA"
