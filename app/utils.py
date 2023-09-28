@@ -28,9 +28,9 @@ class Finder:
         self._dataframe_current_run: pl.DataFrame | None = None
 
     @property
-    def data_current_run(self) -> list | None:
+    def dataframe_current_run(self) -> pl.DataFrame | None:
         """Getter of attribute."""
-        return self._data_current_run
+        return self._dataframe_current_run
 
     def get_web_content(self) -> None:
         """Sends GET request to website and fetches its content."""
@@ -54,24 +54,26 @@ class Finder:
     def parse_content_to_dataframe(self) -> None:
         """Retrieves relevant data from raw content and parses it to dataframe."""
         data: list = []
-        list_of_items: list[bs4.element.Tag] = (
-            self._raw_content.find_all("div", class_=WEB_CLASSES["olx_items"])
+        items: list[bs4.element.Tag] = (
+            self._raw_content.find_all("div", class_=WEB_CLASSES["olx_items"]) if self._raw_content
+            else []
         )
         for item in items:
             id_text: str | None = item.get("id")
+
             if not id_text:
                 continue
 
             url_tag: bs_tag = item.find("a", class_=WEB_CLASSES["olx_item_url"])
             header_tag: bs_tag = item.find("h6", class_=WEB_CLASSES["olx_item_header"])
             price_tag: bs_tag = item.find("p", class_=WEB_CLASSES["olx_item_price"])
-            refresh_date_tag: bs_tag = item.find(
+            refresh_dt_tag: bs_tag = item.find(
                 "p", class_=WEB_CLASSES["olx_item_refresh_date"]
             )
 
             url_text: str = url_tag.get("href") if url_tag else "NA"
             header_text: str = header_tag.text if header_tag else "NA"
-            price_text: str = price_tag.text if header_tag else "NA"
+            price_text: str = price_tag.text if price_tag else "NA"
             refresh_dt_text: str = refresh_dt_tag.text if refresh_dt_tag else "NA"
 
             if url_text.startswith("/d/"):
@@ -121,12 +123,6 @@ class Finder:
             print("Error: ", e)  # TODO LOGGER
         else:
             print(f"Mail Sent. Number of flats: {len(SUBSCRIBERS)}")  # TODO LOGGER
-
-    @property
-    def dataframe_current_run(self) -> pl.DataFrame | None:
-        """Getter of attribute."""
-        return self._dataframe_current_run
-
 
 def _get_new_results_only(dataframe: pl.DataFrame) -> None:
     """Compares new data with existing one and appends new data only to csv file."""
