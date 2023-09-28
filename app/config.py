@@ -7,3 +7,8 @@ WEB_CLASSES = {
     "olx_item_price": "css-10b0gli",
     "olx_item_refresh_date": "css-veheph",
 }
+
+PATH_ITEMS = "data/items.csv"
+
+PRODUCER = ""
+PWD = ""
