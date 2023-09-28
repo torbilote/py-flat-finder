@@ -5,7 +5,7 @@ WEB_CLASSES = {
     "olx_item_url": "css-rc5s2u",
     "olx_item_header": "css-16v5mdi",
     "olx_item_price": "css-10b0gli",
-    "olx_item_refresh_date": "css-veheph",
+    "olx_item_refresh_dt": "css-veheph",
 }
 
 PATH_ITEMS = "data/items.csv"

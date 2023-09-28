@@ -27,6 +27,11 @@ class Finder:
         self._raw_content: bs4.BeautifulSoup | None = None
         self._dataframe_current_run: pl.DataFrame | None = None
 
+    @property
+    def data_current_run(self) -> list | None:
+        """Getter of attribute."""
+        return self._data_current_run
+
     def get_web_content(self) -> None:
         """Sends GET request to website and fetches its content."""
         session: requests.Session = requests.Session()
@@ -51,12 +56,9 @@ class Finder:
         data: list = []
         list_of_items: list[bs4.element.Tag] = (
             self._raw_content.find_all("div", class_=WEB_CLASSES["olx_items"])
-            if self._raw_content
-            else []
         )
-        for item in list_of_items:
+        for item in items:
             id_text: str | None = item.get("id")
-
             if not id_text:
                 continue
 
@@ -70,7 +72,7 @@ class Finder:
             url_text: str = url_tag.get("href") if url_tag else "NA"
             header_text: str = header_tag.text if header_tag else "NA"
             price_text: str = price_tag.text if header_tag else "NA"
-            refresh_date_text: str = refresh_date_tag.text if refresh_date_tag else "NA"
+            refresh_dt_text: str = refresh_dt_tag.text if refresh_dt_tag else "NA"
 
             if url_text.startswith("/d/"):
                 url_text = "https://www.olx.pl" + url_text
@@ -81,7 +83,7 @@ class Finder:
                     "url": url_text,
                     "header": header_text,
                     "price": price_text,
-                    "refresh_date": refresh_date_text,
+                    "refresh_date": refresh_dt_text,
                 }
             )
         dataframe: pl.DataFrame = pl.DataFrame(data)
