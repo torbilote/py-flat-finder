@@ -13,7 +13,7 @@ from loguru import logger
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from app.config import PATH_ITEMS, WEB_CLASSES
+from app.config import PATH_ITEMS, WEB_CLASSES, PRODUCER, PWD, SUBSCRIBERS
 
 bs_tag: TypeAlias = bs4.element.Tag | bs4.element.NavigableString | None
 
@@ -55,7 +55,8 @@ class Finder:
         """Retrieves relevant data from raw content and parses it to dataframe."""
         data: list = []
         items: list[bs4.element.Tag] = (
-            self._raw_content.find_all("div", class_=WEB_CLASSES["olx_items"]) if self._raw_content
+            self._raw_content.find_all("div", class_=WEB_CLASSES["olx_items"])
+            if self._raw_content
             else []
         )
         for item in items:
@@ -89,20 +90,27 @@ class Finder:
                 }
             )
         dataframe: pl.DataFrame = pl.DataFrame(data)
-        dataframe_filtered: pl.DataFrame = _get_new_results_only(dataframe)
-        dataframe_filtered.write_csv(file=PATH_ITEMS)
-        self._dataframe_current_run = dataframe_filtered
+
+        dataframe_new_only: pl.DataFrame
+        dataframe_combined: pl.DataFrame
+        dataframe_new_only, dataframe_combined = _get_filtered_results(dataframe)
+        self._dataframe_current_run = dataframe_new_only
+        dataframe_combined.write_csv(PATH_ITEMS)
+
 
     def send_notification_to_users(self) -> None:
         """Sends email notification to defined users."""
-        email = MIMEMultipart("alternative")
-        email["From"]: str = email.utils.formataddr(("NL", PRODUCER))
-        email["Subject"]: str = f"{len(self._dataframe_current_run)} flat offers!"
+        email_content: MIMEMultipart = MIMEMultipart("alternative")
+        email_content["From"]: str = email.utils.formataddr(("NL", PRODUCER))
+        email_content[
+            "Subject"
+        ]: str = f"{len(self._dataframe_current_run)} flat offers!"
 
-        content: str = ""
+        content_list : list = [f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}' for item in self._dataframe_current_run.iter_rows(named=True)]
+        content: str = '\n'.join(content_list)
 
         try:
-            session = smtplib.SMTP_SSL(
+            session: smtplib.SMTP_SSL = smtplib.SMTP_SSL(
                 "smtp.poczta.onet.pl",
                 465,
                 context=ssl.create_default_context(),
@@ -112,23 +120,24 @@ class Finder:
             session.login(PRODUCER, PWD)
 
             for subscriber in SUBSCRIBERS:
-                email["To"] = email.utils.formataddr(("Subscriber", subscriber))
-                email.attach(MIMEText(content, "plain"))
-                text = email.as_string()
-                session.sendmail(BOT_EMAIL, subscriber, text)
+                email_content["To"] = email.utils.formataddr(("Subscriber", subscriber))
+                email_content.attach(MIMEText(content, "plain"))
+                text = email_content.as_string()
+                session.sendmail(PRODUCER, subscriber, text)
 
             session.close()
 
-        except Exception as e:
-            print("Error: ", e)  # TODO LOGGER
+        except Exception as err:
+            print("Error: ", type(err), err)  # TODO LOGGER
         else:
-            print(f"Mail Sent. Number of flats: {len(SUBSCRIBERS)}")  # TODO LOGGER
+            print(f"Mail Sent. Number of flats: {len(content_list)}. Number of subscribers: {len(SUBSCRIBERS)}")  # TODO LOGGER
 
-def _get_new_results_only(dataframe: pl.DataFrame) -> None:
+
+def _get_filtered_results(dataframe: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
     """Compares new data with existing one and appends new data only to csv file."""
     existing_df: pl.DataFrame = pl.read_csv(
         source="data/items.csv", infer_schema_length=0
     )
     existing_df_ids: pl.Series = existing_df["id"]
     new_df: pl.DataFrame = dataframe.filter(~pl.col("id").is_in(existing_df_ids))
-    return pl.concat([existing_df, new_df])
+    return new_df, pl.concat([existing_df, new_df])
