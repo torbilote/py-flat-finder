@@ -4,20 +4,20 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import TypeAlias
+
 import bs4
 import pendulum
 import polars as pl
 import requests
 from loguru import logger
 from requests.adapters import HTTPAdapter
-
 from urllib3.util import Retry
 
 from app.config import (
     PATH_ITEMS,
+    REQUEST_HEADERS,
     SENDER_EMAIL,
     SENDER_PWD,
-    REQUEST_HEADERS,
     SUBSCRIBERS,
     WEB_CLASSES,
     WEB_URL,
@@ -32,7 +32,7 @@ class Finder:
     def __init__(self) -> None:
         """Init."""
         self._url: str
-        self._classes = dict[str,str]
+        self._classes = dict[str, str]
         self._raw_content: bs4.BeautifulSoup
         self._dataframe_current_run: pl.DataFrame
 
@@ -50,7 +50,7 @@ class Finder:
         session = requests.Session()
         retries = Retry(total=3, backoff_factor=1)
         session.mount("https://", HTTPAdapter(max_retries=retries))
-        response = session.get(self._url,timeout=10,headers=REQUEST_HEADERS)
+        response = session.get(self._url, timeout=10, headers=REQUEST_HEADERS)
 
         try:
             response.raise_for_status()
@@ -81,15 +81,17 @@ class Finder:
         items = self._raw_content.find_all("div", class_=self._classes["olx_items"])
 
         for item in items:
-            id_text = item.get("id", '')
+            id_text = item.get("id", "")
 
             if not id_text:
                 continue
 
-            url_tag = item.find("a", class_=WEB_CLASSES["olx_item_url"]) or ''
-            header_tag = item.find("h6", class_=WEB_CLASSES["olx_item_header"]) or ''
-            price_tag = item.find("p", class_=WEB_CLASSES["olx_item_price"]) or ''
-            refresh_dt_tag = item.find("p", class_=WEB_CLASSES["olx_item_refresh_dt"]) or ''
+            url_tag = item.find("a", class_=WEB_CLASSES["olx_item_url"])
+            header_tag = item.find("h6", class_=WEB_CLASSES["olx_item_header"])
+            price_tag = item.find("p", class_=WEB_CLASSES["olx_item_price"])
+            refresh_dt_tag = (
+                item.find("p", class_=WEB_CLASSES["olx_item_refresh_dt"])
+            )
 
             url_text = url_tag.get("href") if url_tag else "NA"
             header_text = header_tag.text if header_tag else "NA"
@@ -121,16 +123,18 @@ class Finder:
         email_message: list
         session: smtplib.SMTP_SSL
 
-        email_message = "\n".join([
-            f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}'
-            for item in self._dataframe_current_run.iter_rows(named=True)
-        ])
+        email_message = "\n".join(
+            [
+                f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}'
+                for item in self._dataframe_current_run.iter_rows(named=True)
+            ]
+        )
 
         email_body = MIMEMultipart("alternative")
         email_body["From"] = email.utils.formataddr(("NL", SENDER_EMAIL))
         email_body["Subject"] = f"{len(self._dataframe_current_run)} flat offers!"
         email_body.attach(MIMEText(email_message, "plain"))
-        email_body["To"] = email.utils.formataddr((None, 'Subscriber'))
+        email_body["To"] = email.utils.formataddr((None, "Subscriber"))
         email_body_as_string = email_body.as_string()
         try:
             session = smtplib.SMTP_SSL(
