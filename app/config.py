@@ -19,6 +19,6 @@ PATH_ITEMS: str = "data/items.csv"
 SENDER_EMAIL: str = os.getenv("sender_email", "")
 SENDER_PWD: str = os.getenv("sender_pwd", "")
 SUBSCRIBERS: list[str] = [
-    "bartoszek.jus@gmail.com",
+    # "bartoszek.jus@gmail.com",
     "trebronszef1@gmail.com",
 ]

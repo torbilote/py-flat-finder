@@ -89,9 +89,7 @@ class Finder:
             url_tag = item.find("a", class_=WEB_CLASSES["olx_item_url"])
             header_tag = item.find("h6", class_=WEB_CLASSES["olx_item_header"])
             price_tag = item.find("p", class_=WEB_CLASSES["olx_item_price"])
-            refresh_dt_tag = (
-                item.find("p", class_=WEB_CLASSES["olx_item_refresh_dt"])
-            )
+            refresh_dt_tag = item.find("p", class_=WEB_CLASSES["olx_item_refresh_dt"])
 
             url_text = url_tag.get("href") if url_tag else "NA"
             header_text = header_tag.text if header_tag else "NA"
@@ -122,6 +120,7 @@ class Finder:
         email_body_as_string: str
         email_message: list
         session: smtplib.SMTP_SSL
+        smtp_exceptions: tuple
 
         email_message = "\n".join(
             [
@@ -133,9 +132,16 @@ class Finder:
         email_body = MIMEMultipart("alternative")
         email_body["From"] = email.utils.formataddr(("NL", SENDER_EMAIL))
         email_body["Subject"] = f"{len(self._dataframe_current_run)} flat offers!"
-        email_body.attach(MIMEText(email_message, "plain"))
         email_body["To"] = email.utils.formataddr((None, "Subscriber"))
+        email_body.attach(MIMEText(email_message, "plain"))
         email_body_as_string = email_body.as_string()
+
+        smtp_exceptions = (
+            smtplib.SMTPConnectError,
+            smtplib.SMTPAuthenticationError,
+            smtplib.SMTPHeloError,
+            smtplib.SMTPNotSupportedError,
+        )
         try:
             session = smtplib.SMTP_SSL(
                 "smtp.poczta.onet.pl",
@@ -148,7 +154,7 @@ class Finder:
             session.sendmail(SENDER_EMAIL, SUBSCRIBERS, email_body_as_string)
             session.close()
 
-        except Exception as err:
+        except smtp_exceptions as err:
             print("Error: ", type(err), err)  # TODO LOGGER
         else:
             print(
