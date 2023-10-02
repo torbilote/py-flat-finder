@@ -106,6 +106,7 @@ class Finder:
                     "header": header_text,
                     "price": price_text,
                     "refresh_date": refresh_dt_text,
+                    'created_timestamp': pendulum.now().format('YYYY-MM-DD HH:mm:ss')
                 }
             )
 
