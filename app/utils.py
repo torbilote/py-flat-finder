@@ -23,16 +23,17 @@ from app.config import (
     WEB_URL,
 )
 
-bs_tag: TypeAlias = bs4.element.Tag | bs4.element.NavigableString | str
-
 
 class Finder:
     """Finder class."""
 
+    bs_tag: TypeAlias = bs4.element.Tag | bs4.element.NavigableString | str
+    smtp_errors: TypeAlias = tuple[type[smtplib.SMTPException], ...]
+
     def __init__(self) -> None:
         """Init."""
         self._url: str
-        self._classes = dict[str, str]
+        self._classes: dict[str, str]
         self._raw_content: bs4.BeautifulSoup
         self._dataframe_current_run: pl.DataFrame
 
@@ -49,8 +50,8 @@ class Finder:
 
         session = requests.Session()
         retries = Retry(total=3, backoff_factor=1)
-        session.mount("https://", HTTPAdapter(max_retries=retries))
-        response = session.get(self._url, timeout=10, headers=REQUEST_HEADERS)
+        session.mount(prefix="https://", adapter=HTTPAdapter(max_retries=retries))
+        response = session.get(url=self._url, timeout=10, headers=REQUEST_HEADERS)
 
         try:
             response.raise_for_status()
@@ -62,13 +63,12 @@ class Finder:
 
     def parse_content_to_dataframe(self) -> None:
         """Retrieves relevant data from raw content and parses it to dataframe."""
-        data: list[dict[str, str]]
         items: list[bs4.element.Tag]
         id_text: str
-        url_tag: bs_tag
-        header_tag: bs_tag
-        price_tag: bs_tag
-        refresh_dt_tag: bs_tag
+        url_tag: Finder.bs_tag
+        header_tag: Finder.bs_tag
+        price_tag: Finder.bs_tag
+        refresh_dt_tag: Finder.bs_tag
         url_text: str
         header_text: str
         price_text: str
@@ -77,7 +77,7 @@ class Finder:
         dataframe_new_only: pl.DataFrame
         dataframe_combined: pl.DataFrame
 
-        data = []
+        dataframe = pl.DataFrame()
         items = self._raw_content.find_all("div", class_=self._classes["olx_items"])
 
         for item in items:
@@ -99,29 +99,33 @@ class Finder:
             if url_text.startswith("/d/"):
                 url_text = "https://www.olx.pl" + url_text
 
-            data.append(
-                {
-                    "id": id_text,
-                    "url": url_text,
-                    "header": header_text,
-                    "price": price_text,
-                    "refresh_date": refresh_dt_text,
-                    'created_timestamp': pendulum.now().format('YYYY-MM-DD HH:mm:ss')
-                }
+            dataframe.vstack(
+                pl.DataFrame(
+                    {
+                        "id": id_text,
+                        "url": url_text,
+                        "header": header_text,
+                        "price": price_text,
+                        "refresh_date": refresh_dt_text,
+                        "created_timestamp": pendulum.now().format(
+                            "YYYY-MM-DD HH:mm:ss"
+                        ),
+                    }
+                ),
+                in_place=True,
             )
 
-        dataframe = pl.DataFrame(data)
         dataframe_new_only, dataframe_combined = _get_filtered_results(dataframe)
         self._dataframe_current_run = dataframe_new_only
-        dataframe_combined.write_csv(PATH_ITEMS)
+        dataframe_combined.write_csv(file=PATH_ITEMS)
 
     def send_notification_to_users(self) -> None:
         """Sends email notification to defined users."""
         email_body: MIMEMultipart
         email_body_as_string: str
-        email_message: list
+        email_message: str
         session: smtplib.SMTP_SSL
-        smtp_exceptions: tuple
+        smtp_exceptions: Finder.smtp_errors
 
         email_message = "\n".join(
             [
@@ -151,8 +155,10 @@ class Finder:
                 timeout=120,
             )
             session.ehlo()
-            session.login(SENDER_EMAIL, SENDER_PWD)
-            session.sendmail(SENDER_EMAIL, SUBSCRIBERS, email_body_as_string)
+            session.login(user=SENDER_EMAIL, password=SENDER_PWD)
+            session.sendmail(
+                from_addr=SENDER_EMAIL, to_addrs=SUBSCRIBERS, msg=email_body_as_string
+            )
             session.close()
 
         except smtp_exceptions as err:
@@ -169,7 +175,7 @@ def _get_filtered_results(dataframe: pl.DataFrame) -> tuple[pl.DataFrame, pl.Dat
     existing_df_ids: pl.Series
     new_df: pl.DataFrame
 
-    existing_df = pl.read_csv(source="data/items.csv", infer_schema_length=0)
+    existing_df = pl.read_csv(source=PATH_ITEMS, infer_schema_length=0)
     existing_df_ids = existing_df["id"]
     new_df = dataframe.filter(~pl.col("id").is_in(existing_df_ids))
     return new_df, pl.concat([existing_df, new_df])
