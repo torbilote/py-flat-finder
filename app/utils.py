@@ -36,15 +36,21 @@ class Finder:
         self._classes: dict[str, str]
         self._raw_content: bs4.BeautifulSoup
         self._dataframe_current_run: pl.DataFrame
+        self._dataframe_combined: pl.DataFrame
+        self._email_message: str
         self._http_error: bool
-        self._parse_error: bool
+        self._email_error: bool
 
         self._url = WEB_URL
         self._classes = WEB_CLASSES
         self._raw_content = bs4.BeautifulSoup()
         self._dataframe_current_run = pl.DataFrame()
+        self._dataframe_combined = pl.DataFrame()
+        self._email_message = ""
         self._http_error = False
-        self._parse_error = False
+        self._email_error = False
+
+        logger.info(f"Initialized {self.__class__.__name__} object.")
 
     def get_web_content(self) -> None:
         """Sends GET request to website and fetches its content."""
@@ -56,9 +62,10 @@ class Finder:
         retries = Retry(total=3, backoff_factor=1)
         session.mount(prefix="https://", adapter=HTTPAdapter(max_retries=retries))
         response = session.get(url=self._url, timeout=10, headers=REQUEST_HEADERS)
-
-        _try_catch_http_response_error(response)
-        self._raw_content = bs4.BeautifulSoup(response.content, "html.parser")
+        self._try_catch_http_response_error(response)
+        if not self._http_error:
+            self._raw_content = bs4.BeautifulSoup(response.content, "html.parser")
+            logger.info("Fetched web content.")
 
     def parse_content_to_dataframe(self) -> None:
         """Retrieves relevant data from raw content and parses it to dataframe."""
@@ -73,12 +80,15 @@ class Finder:
         price_text: str
         refresh_dt_text: str
         dataframe: pl.DataFrame
-        dataframe_new_only: pl.DataFrame
-        dataframe_combined: pl.DataFrame
+
+        if self._http_error:
+            logger.error(
+                "Failed to parse content to dataframe due to caught exception."
+            )
+            return
 
         dataframe = pl.DataFrame()
         items = self._raw_content.find_all("div", class_=self._classes["olx_items"])
-
         for item in items:
             id_text = item.get("id", "")
 
@@ -114,31 +124,20 @@ class Finder:
                 in_place=True,
             )
 
-        dataframe_new_only, dataframe_combined = _get_filtered_results(dataframe)
-        self._dataframe_current_run = dataframe_new_only
-        dataframe_combined.write_csv(file=PATH_ITEMS)
+        self._dataframe_current_run, self._dataframe_combined = _get_filtered_results(
+            dataframe
+        )
+        logger.info("Parsed content to dataframe.")
 
     def send_notification_to_users(self) -> None:
         """Sends email notification to defined users."""
-        email_body: MIMEMultipart
-        email_body_as_string: str
-        email_message: str
-        session: smtplib.SMTP_SSL
         smtp_exceptions: Finder.smtp_errors
+        email_body: MIMEMultipart
+        email_message: str
 
-        email_message = "\n".join(
-            [
-                f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}'
-                for item in self._dataframe_current_run.iter_rows(named=True)
-            ]
-        )
-
-        email_body = MIMEMultipart("alternative")
-        email_body["From"] = email.utils.formataddr(("NL", SENDER_EMAIL))
-        email_body["Subject"] = f"{len(self._dataframe_current_run)} flat offers!"
-        email_body["To"] = email.utils.formataddr((None, "Subscriber"))
-        email_body.attach(MIMEText(email_message, "plain"))
-        email_body_as_string = email_body.as_string()
+        if self._http_error:
+            logger.error("Failed to send notification due to caught exception.")
+            return
 
         smtp_exceptions = (
             smtplib.SMTPConnectError,
@@ -146,6 +145,37 @@ class Finder:
             smtplib.SMTPHeloError,
             smtplib.SMTPNotSupportedError,
         )
+        email_message = "\n".join(
+            [
+                f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}'
+                for item in self._dataframe_current_run.iter_rows(named=True)
+            ]
+        )
+        email_body = MIMEMultipart("alternative")
+        email_body["From"] = email.utils.formataddr(("NL", SENDER_EMAIL))
+        email_body["Subject"] = f"{len(self._dataframe_current_run)} flat offers!"
+        email_body["To"] = email.utils.formataddr((None, "Subscriber"))
+        email_body.attach(MIMEText(email_message, "plain"))
+        self._email_message = email_body.as_string()
+        self._try_catch_email_send_error(exceptions=smtp_exceptions)
+        if not self._email_error:
+            logger.info("Sent notification to users.")
+            self._dataframe_combined.write_csv(file=PATH_ITEMS)
+            logger.info("Saved data to file.")
+
+    def _try_catch_http_response_error(self, response: requests.Response) -> None:
+        """Tries to get response from GET request, handle error if fails."""
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            logger.exception(f"{type(error).__name__}: {error}")
+            self._http_error = True
+        else:
+            self._http_error = False
+
+    def _try_catch_email_send_error(self, exceptions: smtp_errors) -> None:
+        """Tries to send email notification, handle error if fails."""
+        session: smtplib.SMTP_SSL
         try:
             session = smtplib.SMTP_SSL(
                 "smtp.poczta.onet.pl",
@@ -156,16 +186,14 @@ class Finder:
             session.ehlo()
             session.login(user=SENDER_EMAIL, password=SENDER_PWD)
             session.sendmail(
-                from_addr=SENDER_EMAIL, to_addrs=SUBSCRIBERS, msg=email_body_as_string
+                from_addr=SENDER_EMAIL, to_addrs=SUBSCRIBERS, msg=self._email_message
             )
             session.close()
-
-        except smtp_exceptions as err:
-            print("Error: ", type(err), err)  # TODO LOGGER
+        except exceptions as error:
+            logger.exception(f"{type(error).__name__}: {error}")
+            self._email_error = True
         else:
-            print(
-                f"Mail Sent. Number of flats: {len(self._dataframe_current_run)}. Number of subscribers: {len(SUBSCRIBERS)}"
-            )  # TODO LOGGER
+            self._email_error = False
 
 
 def _get_filtered_results(dataframe: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
@@ -178,9 +206,3 @@ def _get_filtered_results(dataframe: pl.DataFrame) -> tuple[pl.DataFrame, pl.Dat
     existing_df_ids = existing_df["id"]
     new_df = dataframe.filter(~pl.col("id").is_in(existing_df_ids))
     return new_df, pl.concat([existing_df, new_df])
-
-def _try_catch_http_response_error(response: requests.Response) -> bool:
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        print("Failed to fetch.", err)  # TODO LOGGER
