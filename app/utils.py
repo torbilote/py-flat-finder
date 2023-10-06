@@ -36,11 +36,15 @@ class Finder:
         self._classes: dict[str, str]
         self._raw_content: bs4.BeautifulSoup
         self._dataframe_current_run: pl.DataFrame
+        self._http_error: bool
+        self._parse_error: bool
 
         self._url = WEB_URL
         self._classes = WEB_CLASSES
         self._raw_content = bs4.BeautifulSoup()
         self._dataframe_current_run = pl.DataFrame()
+        self._http_error = False
+        self._parse_error = False
 
     def get_web_content(self) -> None:
         """Sends GET request to website and fetches its content."""
@@ -53,12 +57,7 @@ class Finder:
         session.mount(prefix="https://", adapter=HTTPAdapter(max_retries=retries))
         response = session.get(url=self._url, timeout=10, headers=REQUEST_HEADERS)
 
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as err:
-            print("Failed to fetch.", err)  # TODO LOGGER
-            raise
-
+        _try_catch_http_response_error(response)
         self._raw_content = bs4.BeautifulSoup(response.content, "html.parser")
 
     def parse_content_to_dataframe(self) -> None:
@@ -179,3 +178,9 @@ def _get_filtered_results(dataframe: pl.DataFrame) -> tuple[pl.DataFrame, pl.Dat
     existing_df_ids = existing_df["id"]
     new_df = dataframe.filter(~pl.col("id").is_in(existing_df_ids))
     return new_df, pl.concat([existing_df, new_df])
+
+def _try_catch_http_response_error(response: requests.Response) -> bool:
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print("Failed to fetch.", err)  # TODO LOGGER
