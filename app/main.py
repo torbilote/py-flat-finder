@@ -1,5 +1,5 @@
 import app.config as cfg
-from app.flats import FlatNotifier, FlatParser, FlatScraper
+from app.classes.flats import FlatNotifier, FlatParser, FlatScraper
 
 
 def run() -> None:

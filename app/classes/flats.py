@@ -12,7 +12,7 @@ from loguru import logger
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from app.abstracts import Notifier, Parser, Scraper
+from app.classes.abstracts import Notifier, Parser, Scraper
 
 
 class FlatScraper(Scraper):
