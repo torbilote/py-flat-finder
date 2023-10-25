@@ -60,7 +60,8 @@ class FlatScraper(Scraper):
                 self._error_occured = True
                 logger.exception(f"{type(error).__name__}: {error}")
             else:
-                self._content = bs4.BeautifulSoup(response.content, "html.parser")
+                # self._content = bs4.BeautifulSoup(response.content, "html.parser")
+                self._content = bs4.BeautifulSoup(response.content, "lxml")
                 logger.info("Fetched web content.")
 
 
