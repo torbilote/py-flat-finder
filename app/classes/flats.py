@@ -150,18 +150,24 @@ class FlatParser(Parser):
         self._content_dataframe = dataframe.filter(
             ~pl.col("id").is_in(dataframe_from_db_ids)
         )
-        logger.info("Parsed raw content to dataframe.")
+        logger.info(
+            f"Parsed raw content to dataframe. Number of rows: {len(self._content_dataframe)}."
+        )
 
     def load_dataframe_from_database(self, db_path):
         self._content_dataframe_in_db = pl.read_csv(
             source=db_path, infer_schema_length=0
         )
-        logger.info("Loaded dataframe from database.")
+        logger.info(
+            f"Loaded dataframe from database. Number of rows: {len(self._content_dataframe_in_db)}."
+        )
 
     def save_dataframe_in_database(self, db_path):
         dataframe = pl.concat([self._content_dataframe_in_db, self._content_dataframe])
         dataframe.write_csv(file=db_path)
-        logger.info("Saved dataframe in database.")
+        logger.info(
+            f"Saved dataframe in database. Number of new rows: {len(self._content_dataframe)}."
+        )
 
 
 class FlatNotifier(Notifier):
@@ -225,6 +231,11 @@ class FlatNotifier(Notifier):
             smtplib.SMTPDataError,
         )
         self._prepare_email()
+
+        if not self._email_body:
+            logger.warning("Cancelled as no data available.")
+            return
+
         try:
             with smtplib.SMTP_SSL(**smtp_session_config) as session:
                 session.ehlo()
@@ -242,7 +253,9 @@ class FlatNotifier(Notifier):
             logger.exception(f"{type(error).__name__}: {error}")
             self._error_occured = True
         else:
-            logger.info("Sent notification to recipients.")
+            logger.info(
+                f"Sent notification to recipients. Number of rows: {len(self._dataframe)}."
+            )
 
     def _prepare_email(self):
         """Prepares email content to recipients."""
