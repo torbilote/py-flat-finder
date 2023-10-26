@@ -1,4 +1,5 @@
 import os
+import random
 
 SENDER = {
     "email": os.getenv("sender_email", ""),
@@ -17,8 +18,14 @@ FLAT_WEB_CLASSES = {
     "olx_item_price": "css-10b0gli",
     "olx_item_refresh_dt": "css-veheph",
 }
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0",
+]
 FLAT_REQUEST_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+    "User-Agent": random.choice(user_agents),
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
