@@ -6,7 +6,7 @@ SENDER = {
     "password": os.getenv("sender_pwd", ""),
 }
 RECIPIENTS = [
-    # "bartoszek.jus@gmail.com",
+    "bartoszek.jus@gmail.com",
     "trebronszef1@gmail.com",
 ]
 

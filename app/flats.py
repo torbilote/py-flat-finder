@@ -20,29 +20,29 @@ class FlatScraper(Scraper):
     """Flat scraper class."""
 
     @property
-    def url(self):
+    def web_url(self):
         """Gets webpage url."""
-        return self._url
+        return self._web_url
 
-    @url.setter
-    def url(self, value):
+    @web_url.setter
+    def web_url(self, value):
         """Sets webpage url."""
-        self._url = value
+        self._web_url = value
 
     @property
-    def headers(self):
+    def request_headers(self):
         """Gets html headers."""
-        return self._headers
+        return self._request_headers
 
-    @headers.setter
-    def headers(self, value):
+    @request_headers.setter
+    def request_headers(self, value):
         """Sets html headers."""
-        self._headers = value
+        self._request_headers = value
 
     @property
-    def content(self):
+    def web_content(self):
         """Gets webpage content."""
-        return self._content
+        return self._web_content
 
     @property
     def error_occured(self):
@@ -55,7 +55,10 @@ class FlatScraper(Scraper):
             retries = Retry(total=3, backoff_factor=1)
             session.mount(prefix="https://", adapter=HTTPAdapter(max_retries=retries))
             response = session.get(
-                url=self._url, timeout=10, headers=self._headers, cookies=None
+                url=self._web_url,
+                timeout=10,
+                headers=self._request_headers,
+                cookies=None,
             )
             try:
                 response.raise_for_status()
@@ -64,7 +67,7 @@ class FlatScraper(Scraper):
                 logger.exception(f"{type(error).__name__}: {error}")
             else:
                 # self._content = bs4.BeautifulSoup(response.content, "html.parser")
-                self._content = bs4.BeautifulSoup(response.content, "lxml")
+                self._web_content = bs4.BeautifulSoup(response.content, "lxml")
                 logger.info("Fetched web content.")
         return 1
 
@@ -73,34 +76,34 @@ class FlatParser(Parser):
     """Flat parser class."""
 
     @property
-    def content_raw(self):
+    def raw_content(self):
         """Gets raw content."""
-        return self._content_raw
+        return self._raw_content
 
-    @content_raw.setter
-    def content_raw(self, value):
+    @raw_content.setter
+    def raw_content(self, value):
         """Sets raw content."""
-        self._content_raw = value
+        self._raw_content = value
 
     @property
-    def classes(self):
+    def web_classes(self):
         """Gets raw content."""
-        return self._classes
+        return self._web_classes
 
-    @classes.setter
-    def classes(self, value):
+    @web_classes.setter
+    def web_classes(self, value):
         """Sets raw content."""
-        self._classes = value
+        self._web_classes = value
 
     @property
-    def content_dataframe(self):
+    def dataframe(self):
         """Gets dataframe."""
-        return self._content_dataframe
+        return self._dataframe
 
     @property
-    def content_dataframe_in_db(self):
+    def data_from_db(self):
         """Gets dataframe from db."""
-        return self._content_dataframe_in_db
+        return self._data_from_db
 
     @property
     def error_occured(self):
@@ -117,18 +120,20 @@ class FlatParser(Parser):
             ("refresh_date", pl.Utf8),
             ("created_timestamp", pl.Utf8),
         ]
-        dataframe = pl.DataFrame(schema=schema)
-        items = self._content_raw.find_all("div", class_=self._classes["olx_items"])
+        df = pl.DataFrame(schema=schema)
+        items = self._raw_content.find_all("div", class_=self._web_classes["olx_items"])
         for item in items:
             id_text = item.get("id", "")
 
             if not id_text:
                 continue
 
-            url_tag = item.find("a", class_=self._classes["olx_item_url"])
-            header_tag = item.find("h6", class_=self._classes["olx_item_header"])
-            price_tag = item.find("p", class_=self._classes["olx_item_price"])
-            refresh_dt_tag = item.find("p", class_=self._classes["olx_item_refresh_dt"])
+            url_tag = item.find("a", class_=self._web_classes["olx_item_url"])
+            header_tag = item.find("h6", class_=self._web_classes["olx_item_header"])
+            price_tag = item.find("p", class_=self._web_classes["olx_item_price"])
+            refresh_dt_tag = item.find(
+                "p", class_=self._web_classes["olx_item_refresh_dt"]
+            )
 
             url_text = url_tag.get("href") if url_tag else "NA"
             header_text = header_tag.text if header_tag else "NA"
@@ -147,32 +152,27 @@ class FlatParser(Parser):
                 "created_timestamp": pendulum.now().format("YYYY-MM-DD HH:mm:ss"),
             }
 
-            dataframe.vstack(pl.DataFrame(item_data), in_place=True)
+            df.vstack(pl.DataFrame(item_data), in_place=True)
 
-        dataframe_from_db_ids = self._content_dataframe_in_db["id"]
-
-        self._content_dataframe = dataframe.filter(
-            ~pl.col("id").is_in(dataframe_from_db_ids)
-        )
+        ids = self._data_from_db["id"]
+        self._dataframe = df.filter(~pl.col("id").is_in(ids))
         logger.info(
-            f"Parsed raw content to dataframe. Number of new rows: {len(self._content_dataframe)}."
+            f"Parsed raw content to dataframe. Number of new rows: {len(self._dataframe)}."
         )
         return 1
 
     def load_dataframe_from_database(self, db_path):
-        self._content_dataframe_in_db = pl.read_csv(
-            source=db_path, infer_schema_length=0
-        )
+        self._data_from_db = pl.read_csv(source=db_path, infer_schema_length=0)
         logger.info(
-            f"Loaded dataframe from database. Number of rows: {len(self._content_dataframe_in_db)}."
+            f"Loaded dataframe from database. Number of rows: {len(self._data_from_db)}."
         )
         return 1
 
     def save_dataframe_in_database(self, db_path):
-        dataframe = pl.concat([self._content_dataframe_in_db, self._content_dataframe])
+        dataframe = pl.concat([self._data_from_db, self._dataframe])
         dataframe.write_csv(file=db_path)
         logger.info(
-            f"Saved dataframe in database. Number of new rows: {len(self._content_dataframe)}."
+            f"Saved dataframe in database. Number of new rows: {len(self._dataframe)}."
         )
         return 1
 
@@ -186,14 +186,14 @@ class FlatNotifier(Notifier):
         self._email_body = None
 
     @property
-    def dataframe(self):
+    def data(self):
         """Gets dataframe."""
-        return self._dataframe
+        return self._data
 
-    @dataframe.setter
-    def dataframe(self, value):
+    @data.setter
+    def data(self, value):
         """Sets dataframe."""
-        self._dataframe = value
+        self._data = value
 
     @property
     def recipients(self):
@@ -222,7 +222,7 @@ class FlatNotifier(Notifier):
 
     def send_notification(self):
         """Sends email notification to recipients."""
-        if self._dataframe.is_empty():
+        if self._data.is_empty():
             logger.warning("Cancelled as no data available.")
             self._error_occured = True
             return 0
@@ -261,7 +261,7 @@ class FlatNotifier(Notifier):
             self._error_occured = True
         else:
             logger.info(
-                f"Sent notification to recipients. Number of rows: {len(self._dataframe)}."
+                f"Sent notification to recipients. Number of rows: {len(self._data)}."
             )
         return 1
 
@@ -269,12 +269,12 @@ class FlatNotifier(Notifier):
         """Prepares email content to recipients."""
         email_text_message_array = [
             f'{item["url"]} - {item["header"]} - {item["price"]} - {item["refresh_date"]}'
-            for item in self._dataframe.iter_rows(named=True)
+            for item in self._data.iter_rows(named=True)
         ]
         email_text_message = "\n".join(email_text_message_array)
         email_config = MIMEMultipart("alternative")
         email_config["From"] = email.utils.formataddr(("NL", self._sender["email"]))
-        email_config["Subject"] = f"{len(self._dataframe)} flat offers!"
+        email_config["Subject"] = f"{len(self._data)} flat offers!"
         email_config["To"] = email.utils.formataddr((None, "Subscriber"))
         email_config.attach(MIMEText(email_text_message, "plain"))
         self._email_body = email_config.as_string()
@@ -287,8 +287,8 @@ class FlatRunner(Runner):
     def run(self):
         """Execute runner's logic."""
         flat_scraper = FlatScraper()
-        flat_scraper.url = cfg.FLAT_WEB_URL
-        flat_scraper.headers = cfg.FLAT_REQUEST_HEADERS
+        flat_scraper.web_url = cfg.FLAT_WEB_URL
+        flat_scraper.request_headers = cfg.FLAT_REQUEST_HEADERS
         flat_scraper.scrap_webpage()
 
         if flat_scraper.error_occured:
@@ -296,15 +296,15 @@ class FlatRunner(Runner):
 
         flat_parser = FlatParser()
         flat_parser.load_dataframe_from_database(db_path=cfg.FLAT_DB_PATH)
-        flat_parser.content_raw = flat_scraper.content
-        flat_parser.classes = cfg.FLAT_WEB_CLASSES
+        flat_parser.raw_content = flat_scraper.web_content
+        flat_parser.web_classes = cfg.FLAT_WEB_CLASSES
         flat_parser.parse_raw_content_to_dataframe()
 
         if flat_parser.error_occured:
             return 0
 
         flat_notifier = FlatNotifier()
-        flat_notifier.dataframe = flat_parser.content_dataframe
+        flat_notifier.data = flat_parser.dataframe
         flat_notifier.recipients = cfg.RECIPIENTS
         flat_notifier.sender = cfg.SENDER
         flat_notifier.send_notification()

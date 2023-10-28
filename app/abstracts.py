@@ -6,28 +6,39 @@ class Scraper(ABC):
 
     def __init__(self):
         """Init."""
-        self._url = None
-        self._classes = None
-        self._content = None
+        self._web_url = None
+        self._request_headers = None
+        self._web_content = None
         self._error_occured = False
 
     @property
     @abstractmethod
-    def url(self):
+    def web_url(self):
         """Gets webpage url."""
-        return self._url
+        return self._web_url
 
-    @url.setter
+    @web_url.setter
     @abstractmethod
-    def url(self, value):
+    def web_url(self, value):
         """Sets webpage url."""
-        self._url = value
+        self._web_url = value
 
     @property
     @abstractmethod
-    def content(self):
+    def request_headers(self):
+        """Gets html headers."""
+        return self._request_headers
+
+    @request_headers.setter
+    def request_headers(self, value):
+        """Sets html headers."""
+        self._request_headers = value
+
+    @property
+    @abstractmethod
+    def web_content(self):
         """Gets webpage content."""
-        return self._content
+        return self._web_content
 
     @property
     @abstractmethod
@@ -45,47 +56,47 @@ class Parser(ABC):
 
     def __init__(self):
         """Init."""
-        self._content_raw = None
-        self._classes = None
-        self._content_dataframe = None
-        self._content_dataframe_in_db = None
+        self._raw_content = None
+        self._web_classes = None
+        self._dataframe = None
+        self._data_from_db = None
         self._error_occured = False
 
     @property
     @abstractmethod
-    def content_raw(self):
+    def raw_content(self):
         """Gets raw content."""
-        return self._content_raw
+        return self._raw_content
 
-    @content_raw.setter
+    @raw_content.setter
     @abstractmethod
-    def content_raw(self, value):
+    def raw_content(self, value):
         """Sets raw content."""
-        self._content_raw = value
+        self._raw_content = value
 
     @property
     @abstractmethod
-    def classes(self):
+    def web_classes(self):
         """Gets raw content."""
-        return self._classes
+        return self._web_classes
 
-    @classes.setter
+    @web_classes.setter
     @abstractmethod
-    def classes(self, value):
+    def web_classes(self, value):
         """Sets raw content."""
-        self._classes = value
+        self._web_classes = value
 
     @property
     @abstractmethod
-    def content_dataframe(self):
+    def dataframe(self):
         """Gets dataframe."""
-        return self._content_dataframe
+        return self._dataframe
 
     @property
     @abstractmethod
-    def content_dataframe_in_db(self):
+    def data_from_db(self):
         """Gets dataframe coming from db."""
-        return self._content_dataframe_in_db
+        return self._data_from_db
 
     @property
     @abstractmethod
@@ -111,22 +122,22 @@ class Notifier(ABC):
 
     def __init__(self):
         """Init."""
-        self._dataframe = None
+        self._data = None
         self._recipients = None
         self._sender = None
         self._error_occured = False
 
     @property
     @abstractmethod
-    def dataframe(self):
+    def data(self):
         """Gets dataframe."""
-        return self._dataframe
+        return self._data
 
-    @dataframe.setter
+    @data.setter
     @abstractmethod
-    def dataframe(self, value):
+    def data(self, value):
         """Sets dataframe."""
-        self._dataframe = value
+        self._data = value
 
     @property
     @abstractmethod
