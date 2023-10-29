@@ -404,17 +404,17 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polars"
-version = "0.19.11"
+version = "0.19.12"
 description = "Blazingly fast DataFrame library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "polars-0.19.11-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:de8158e5f09346ec4622057b7afa7e5339eed61c3c3e874b469c9cb27339df51"},
-    {file = "polars-0.19.11-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:c76c2107260a1ca8a57f02d77ea12dc4db2090d7404b814570474db0392ecf6b"},
-    {file = "polars-0.19.11-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a5c6cf2aa2d301230a80277f8711646453b89eadd6058baf30b7104f420daad2"},
-    {file = "polars-0.19.11-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2ac2890c96736dee83335b1f0b403233aba18b86760505e81eb9f96112afc55d"},
-    {file = "polars-0.19.11-cp38-abi3-win_amd64.whl", hash = "sha256:95be83cb0bbd2d608849e24a973ea3135bd25ae6ce7168e31ad25a02e7773122"},
-    {file = "polars-0.19.11.tar.gz", hash = "sha256:156eab31d9f9bac218bbd391559c667848372a5c584472784695e4fac087fd5b"},
+    {file = "polars-0.19.12-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c308e501805d9ca256b695fd55974c6267f68e05a98ccd14430071a5f9c97be8"},
+    {file = "polars-0.19.12-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:9a47da843a425fb4d9aa23f69f6e855f0498cdfb9d35a93c0a5e377594649aac"},
+    {file = "polars-0.19.12-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0ece4c108c749b213fbba006eb39ffb3703be208121a625369bfe47048d321a0"},
+    {file = "polars-0.19.12-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:69c9e6919a5113c75e059ba773f22ac1ff78d966ab5663f07dc0dc5ff916246c"},
+    {file = "polars-0.19.12-cp38-abi3-win_amd64.whl", hash = "sha256:6efbc14c051bfc188c85ead71197ba0bd2fce7e6131061e28e8b280350d37a35"},
+    {file = "polars-0.19.12.tar.gz", hash = "sha256:55b16602bcbf91b5ce888d1a588b47fcd9a35221b1a08c5a27cfe6d7cbd81be2"},
 ]
 
 [package.extras]

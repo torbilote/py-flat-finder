@@ -23,8 +23,7 @@ pytest = "~7.4.0"
 target-version = "py311"
 
 [tool.ruff.lint]
-
-[tool.ruff.format]
+extend-select = ["RUF", "I"]
 
 [tool.mypy]
 ignore_missing_imports = "True"
