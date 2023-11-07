@@ -1,5 +1,3 @@
-"""Conftest file"""
-
 import pytest
 
 
