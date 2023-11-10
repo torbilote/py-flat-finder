@@ -1,5 +1,5 @@
-import app.config as main_cfg
 import app.cars.config as cfg
+import app.config as main_cfg
 from app.abstracts import Runner
 from app.cars.notifier import CarNotifier
 from app.cars.parser import CarParser
@@ -20,7 +20,7 @@ class CarRunner(Runner):
             return 0
 
         car_parser = CarParser()
-        car_parser.load_dataframe_from_database(db_path=cfg.DB_PATH)
+        car_parser.load_dataframe_from_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         car_parser.raw_content = car_scraper.web_content
         car_parser.web_classes = cfg.WEB_CLASSES
         car_parser.parse_raw_content_to_dataframe()
@@ -37,5 +37,5 @@ class CarRunner(Runner):
         if car_notifier.error_occured:
             return 0
 
-        car_parser.save_dataframe_in_database(db_path=cfg.DB_PATH)
+        car_parser.save_dataframe_in_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         return 1

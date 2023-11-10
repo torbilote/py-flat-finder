@@ -1,5 +1,10 @@
+import io
+
 import pendulum
 import polars as pl
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from loguru import logger
 
 from app.abstracts import Parser
@@ -94,16 +99,38 @@ class FlatParser(Parser):
         )
         return 1
 
-    def load_dataframe_from_database(self, db_path):
+    def load_dataframe_from_database(self, db_path, file_id):
+        scope = ["https://www.googleapis.com/auth/drive"]
+        service_account_json_key = "app/sa-google-drive-credentials.json"
+        credentials = service_account.Credentials.from_service_account_file(
+            filename=service_account_json_key, scopes=scope
+        )
+        service = build("drive", "v3", credentials=credentials)
+        file_on_disk = service.files().get_media(fileId=file_id)
+        stream_io = io.BytesIO()
+        MediaIoBaseDownload(stream_io, file_on_disk).next_chunk()
+        file_downloaded = stream_io.getvalue()
+        with open(db_path, "wb") as f:
+            f.write(file_downloaded)
+
         self._data_from_db = pl.read_csv(source=db_path, infer_schema_length=0)
         logger.info(
             f"Loaded dataframe from database. Number of rows: {len(self._data_from_db)}."
         )
         return 1
 
-    def save_dataframe_in_database(self, db_path):
+    def save_dataframe_in_database(self, db_path, file_id):
         dataframe = pl.concat([self._data_from_db, self._dataframe])
         dataframe.write_csv(file=db_path)
+
+        scope = ["https://www.googleapis.com/auth/drive"]
+        service_account_json_key = "app/sa-google-drive-credentials.json"
+        credentials = service_account.Credentials.from_service_account_file(
+            filename=service_account_json_key, scopes=scope
+        )
+        service = build("drive", "v3", credentials=credentials)
+        media = MediaFileUpload(db_path, mimetype="text/csv")
+        _file = service.files().update(fileId=file_id, media_body=media).execute()
         logger.info(
             f"Saved dataframe in database. Number of new rows: {len(self._dataframe)}."
         )

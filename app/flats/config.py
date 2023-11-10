@@ -23,4 +23,5 @@ REQUEST_HEADERS = {
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
-DB_PATH = "data/flats.csv"
+FILE_PATH_LOCAL = "data/flats.csv"
+FILE_ID_DB = "1L2DZJjSJ9YHA6iYjmMoZe04E_dLqUOlW"

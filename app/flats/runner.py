@@ -20,7 +20,7 @@ class FlatRunner(Runner):
             return 0
 
         flat_parser = FlatParser()
-        flat_parser.load_dataframe_from_database(db_path=cfg.DB_PATH)
+        flat_parser.load_dataframe_from_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         flat_parser.raw_content = flat_scraper.web_content
         flat_parser.web_classes = cfg.WEB_CLASSES
         flat_parser.parse_raw_content_to_dataframe()
@@ -37,5 +37,5 @@ class FlatRunner(Runner):
         if flat_notifier.error_occured:
             return 0
 
-        flat_parser.save_dataframe_in_database(db_path=cfg.DB_PATH)
+        flat_parser.save_dataframe_in_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         return 1

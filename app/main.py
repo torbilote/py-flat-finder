@@ -1,5 +1,5 @@
-from app.flats.runner import FlatRunner
 from app.cars.runner import CarRunner
+from app.flats.runner import FlatRunner
 
 if __name__ == "__main__":
     flat_runner = FlatRunner()
