@@ -1,7 +1,7 @@
 import random
 
 RECIPIENTS = [
-    "bartoszek.jus@gmail.com",
+    # "bartoszek.jus@gmail.com",
     "trebronszef1@gmail.com",
 ]
 WEB_URL = "https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/wroclaw/?page=&search%5Bfilter_enum_floor_select%5D%5B0%5D=floor_1&search%5Bfilter_enum_floor_select%5D%5B1%5D=floor_2&search%5Bfilter_enum_floor_select%5D%5B2%5D=floor_3&search%5Bfilter_enum_floor_select%5D%5B3%5D=floor_4&search%5Bfilter_float_m%3Afrom%5D=40&search%5Border%5D=created_at%3Adesc&view=list"
@@ -23,5 +23,5 @@ REQUEST_HEADERS = {
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
-FILE_PATH_LOCAL = "data/flats.csv"
+FILE_PATH_LOCAL = "app/data/flats.csv"
 FILE_ID_DB = "1L2DZJjSJ9YHA6iYjmMoZe04E_dLqUOlW"
