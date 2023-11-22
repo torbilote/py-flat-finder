@@ -12,7 +12,7 @@ class CarRunner(Runner):
     def run(self):
         """Execute runner's logic."""
         car_scraper = CarScraper()
-        car_scraper.web_url = cfg.WEB_URL
+        car_scraper.web_url = cfg.WEB_URLS
         car_scraper.request_headers = cfg.REQUEST_HEADERS
         car_scraper.scrap_webpage()
 

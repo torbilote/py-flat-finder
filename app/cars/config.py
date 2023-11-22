@@ -5,7 +5,13 @@ RECIPIENTS = [
     "trebronszef1@gmail.com",
 ]
 
-WEB_URL = "https://www.olx.pl/motoryzacja/samochody/?page=1&search%5Bfilter_enum_car_body%5D%5B0%5D=sedan&search%5Bfilter_enum_car_body%5D%5B1%5D=estate-car&search%5Bfilter_enum_condition%5D%5B0%5D=notdamaged&search%5Bfilter_enum_petrol%5D%5B0%5D=petrol&search%5Bfilter_enum_petrol%5D%5B1%5D=lpg&search%5Bfilter_enum_transmission%5D%5B0%5D=manual&search%5Bfilter_float_price%3Ato%5D=35000&search%5Bfilter_float_year%3Afrom%5D=2013"
+WEB_URLS = {
+    'Fiat Tipo': "https://www.olx.pl/motoryzacja/samochody/fiat/konin/?search%5Bdist%5D=100&search%5Bfilter_float_price:to%5D=35000&search%5Bfilter_enum_model%5D%5B0%5D=tipo&search%5Bfilter_float_year:from%5D=2011&search%5Bfilter_enum_petrol%5D%5B0%5D=petrol&search%5Bfilter_enum_petrol%5D%5B1%5D=lpg&search%5Bfilter_enum_car_body%5D%5B0%5D=sedan&search%5Bfilter_float_milage:to%5D=200000&search%5Bfilter_enum_condition%5D%5B0%5D=notdamaged&search%5Bfilter_enum_transmission%5D%5B0%5D=manual",
+    'Opel Astra': "https://www.olx.pl/motoryzacja/samochody/opel/konin/?search%5Bdist%5D=100&search%5Bfilter_float_price:to%5D=35000&search%5Bfilter_enum_model%5D%5B0%5D=astra&search%5Bfilter_float_year:from%5D=2011&search%5Bfilter_enum_petrol%5D%5B0%5D=petrol&search%5Bfilter_enum_petrol%5D%5B1%5D=lpg&search%5Bfilter_enum_car_body%5D%5B0%5D=sedan&search%5Bfilter_float_milage:to%5D=200000&search%5Bfilter_enum_condition%5D%5B0%5D=notdamaged&search%5Bfilter_enum_transmission%5D%5B0%5D=manual",
+    'Skoda Octavia': "https://www.olx.pl/motoryzacja/samochody/skoda/konin/?search%5Bdist%5D=100&search%5Bfilter_float_price:to%5D=35000&search%5Bfilter_enum_model%5D%5B0%5D=octavia&search%5Bfilter_float_year:from%5D=2011&search%5Bfilter_enum_petrol%5D%5B0%5D=petrol&search%5Bfilter_enum_petrol%5D%5B1%5D=lpg&search%5Bfilter_enum_car_body%5D%5B0%5D=sedan&search%5Bfilter_enum_car_body%5D%5B1%5D=hatchback&search%5Bfilter_float_milage:to%5D=200000&search%5Bfilter_enum_condition%5D%5B0%5D=notdamaged&search%5Bfilter_enum_transmission%5D%5B0%5D=manual",
+    'Volkswagen Passat': "https://www.olx.pl/motoryzacja/samochody/volkswagen/konin/?search%5Bdist%5D=100&search%5Bfilter_float_price:to%5D=35000&search%5Bfilter_enum_model%5D%5B0%5D=passat&search%5Bfilter_float_year:from%5D=2011&search%5Bfilter_enum_petrol%5D%5B0%5D=petrol&search%5Bfilter_enum_petrol%5D%5B1%5D=lpg&search%5Bfilter_enum_car_body%5D%5B0%5D=sedan&search%5Bfilter_float_milage:to%5D=200000&search%5Bfilter_enum_condition%5D%5B0%5D=notdamaged&search%5Bfilter_enum_transmission%5D%5B0%5D=manual",
+
+}
 WEB_CLASSES = {
     "olx_items": "css-1sw7q4x",
     "olx_item_url": "css-rc5s2u",
