@@ -59,6 +59,15 @@ class CarParser(Parser):
             ("created_timestamp", pl.Utf8),
         ]
         df = pl.DataFrame(schema=schema)
+
+        available_offers_count_tag = self._raw_content.find("span", class_=self._web_classes["olx_number_of_offers"])
+        available_offers_count_text = available_offers_count_tag.find("span").text
+        print(available_offers_count_text)
+
+        if " 0 " in available_offers_count_text:
+            logger.warning("Cancelled as no data available.")
+            return 0
+
         items = self._raw_content.find_all("div", class_=self._web_classes["olx_items"])
         for item in items:
             id_text = item.get("id", "")

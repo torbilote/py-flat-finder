@@ -13,6 +13,7 @@ WEB_URLS = {
 
 }
 WEB_CLASSES = {
+    "olx_number_of_offers": "css-7ddzao",
     "olx_items": "css-1sw7q4x",
     "olx_item_url": "css-rc5s2u",
     "olx_item_header": "css-16v5mdi",

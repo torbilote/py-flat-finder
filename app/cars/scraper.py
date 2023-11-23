@@ -45,23 +45,18 @@ class CarScraper(Scraper):
         with requests.Session() as session:
             retries = Retry(total=3, backoff_factor=1)
             session.mount(prefix="https://", adapter=HTTPAdapter(max_retries=retries))
-            for index, car in enumerate(self._web_url):
-                response = session.get(
-                    url=self._web_url[car],
-                    timeout=10,
-                    headers=self._request_headers,
-                    cookies=None,
-                )
-                try:
-                    response.raise_for_status()
-                except requests.exceptions.HTTPError as error:
-                    self._error_occured = True
-                    logger.exception(f"{type(error).__name__}: {error}")
-                else:
-                    if not index:
-                        self._web_content = bs4.BeautifulSoup(response.content, "lxml")
-                    else:
-                        self._web_content.body.append(bs4.BeautifulSoup(response.content, "lxml").body)
-                    logger.info(f"Fetched web content. Page {index+1}/{len(self._web_url)}")
-
+            response = session.get(
+                url=self._web_url,
+                timeout=10,
+                headers=self._request_headers,
+                cookies=None,
+            )
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as error:
+                self._error_occured = True
+                logger.exception(f"{type(error).__name__}: {error}")
+            else:
+                self._web_content = bs4.BeautifulSoup(response.content, "lxml")
+                logger.info(f"Fetched web content.")
         return 1
