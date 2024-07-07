@@ -4,13 +4,13 @@ RECIPIENTS = [
     # "bartoszek.jus@gmail.com",
     "trebronszef1@gmail.com",
 ]
-WEB_URL = "https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/wroclaw/?page=&search%5Bfilter_enum_floor_select%5D%5B0%5D=floor_1&search%5Bfilter_enum_floor_select%5D%5B1%5D=floor_2&search%5Bfilter_enum_floor_select%5D%5B2%5D=floor_3&search%5Bfilter_enum_floor_select%5D%5B3%5D=floor_4&search%5Bfilter_float_m%3Afrom%5D=40&search%5Border%5D=created_at%3Adesc&view=list"
+WEB_URL = "https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/wroclaw/?search%5Bfilter_float_m%3Afrom%5D=55&search%5Bfilter_float_price%3Ato%5D=800000&search%5Border%5D=created_at%3Adesc&view=grid"
 WEB_CLASSES = {
     "olx_items": "css-1sw7q4x",
-    "olx_item_url": "css-rc5s2u",
-    "olx_item_header": "css-16v5mdi",
-    "olx_item_price": "css-10b0gli",
-    "olx_item_refresh_dt": "css-veheph",
+    "olx_item_url": "css-z3gu2d",
+    "olx_item_header": "css-1dqjq98",
+    "olx_item_price": "css-3ahyw4",
+    "olx_item_refresh_dt": "css-1mwdrlh",
 }
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69",
@@ -24,4 +24,6 @@ REQUEST_HEADERS = {
     "Content-Type": "application/json",
 }
 FILE_PATH_LOCAL = "app/data/flats.csv"
-FILE_ID_DB = "1L2DZJjSJ9YHA6iYjmMoZe04E_dLqUOlW"
+FILE_ID_DB = "1YvybUmPJqL3nYg1-qKUxEKwq3Rqb0j2Y"
+
+SEND_NOTIFICATION = True

@@ -60,6 +60,7 @@ class FlatParser(Parser):
         ]
         df = pl.DataFrame(schema=schema)
         items = self._raw_content.find_all("div", class_=self._web_classes["olx_items"])
+
         for item in items:
             id_text = item.get("id", "")
 

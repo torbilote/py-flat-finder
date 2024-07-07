@@ -33,3 +33,5 @@ REQUEST_HEADERS = {
 }
 FILE_PATH_LOCAL = "app/data/cars.csv"
 FILE_ID_DB = "1snf1v7apGGTAcGgIMuV4Dn9jQfWsSWSX"
+
+SEND_NOTIFICATION = False

@@ -28,14 +28,15 @@ class CarRunner(Runner):
         if car_parser.error_occured:
             return 0
 
-        car_notifier = CarNotifier()
-        car_notifier.data = car_parser.dataframe
-        car_notifier.recipients = cfg.RECIPIENTS
-        car_notifier.sender = main_cfg.SENDER
-        car_notifier.send_notification()
+        if cfg.SEND_NOTIFICATION:
+            car_notifier = CarNotifier()
+            car_notifier.data = car_parser.dataframe
+            car_notifier.recipients = cfg.RECIPIENTS
+            car_notifier.sender = main_cfg.SENDER
+            car_notifier.send_notification()
 
-        if car_notifier.error_occured:
-            return 0
+            if car_notifier.error_occured:
+                return 0
 
         car_parser.save_dataframe_in_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         return 1

@@ -28,14 +28,15 @@ class FlatRunner(Runner):
         if flat_parser.error_occured:
             return 0
 
-        flat_notifier = FlatNotifier()
-        flat_notifier.data = flat_parser.dataframe
-        flat_notifier.recipients = cfg.RECIPIENTS
-        flat_notifier.sender = main_cfg.SENDER
-        flat_notifier.send_notification()
+        if cfg.SEND_NOTIFICATION:
+            flat_notifier = FlatNotifier()
+            flat_notifier.data = flat_parser.dataframe
+            flat_notifier.recipients = cfg.RECIPIENTS
+            flat_notifier.sender = main_cfg.SENDER
+            flat_notifier.send_notification()
 
-        if flat_notifier.error_occured:
-            return 0
+            if flat_notifier.error_occured:
+                return 0
 
         flat_parser.save_dataframe_in_database(cfg.FILE_PATH_LOCAL, cfg.FILE_ID_DB)
         return 1
